@@ -37,7 +37,7 @@
             width: 100vw;
             height: 100vh;
             pointer-events: none;
-            z-index: 9999;
+            z-index: 99999;
             background: linear-gradient(
                 rgba(18, 16, 16, 0) 50%,
                 rgba(0, 0, 0, 0.25) 50%),
@@ -63,6 +63,27 @@
         }
         .pixel-btn:active {
             transform: scale(0.98);
+        }
+
+        /* Colored button variants for respective glows */
+        .pixel-btn-red {
+            border-color: #ef4444 !important;
+            color: #f87171 !important;
+            box-shadow: 0 0 8px #ef4444 inset, 0 0 8px #ef4444 !important;
+        }
+        .pixel-btn-red:hover {
+            background: #ef4444 !important;
+            color: #000 !important;
+        }
+
+        .pixel-btn-yellow {
+            border-color: #eab308 !important;
+            color: #facc15 !important;
+            box-shadow: 0 0 8px #eab308 inset, 0 0 8px #eab308 !important;
+        }
+        .pixel-btn-yellow:hover {
+            background: #eab308 !important;
+            color: #000 !important;
         }
 
         .pixel-panel {
@@ -106,7 +127,7 @@
 
         .image-above-crt {
             position: relative;
-            z-index: 10000;
+            z-index: 10;
         }
 
         /* Entrance Animations */
@@ -176,7 +197,7 @@
         </p>
 
         <!-- TS CAP FR Button -->
-        <button onclick="openSlideShow()" class="pixel-btn mt-2 py-3 px-2 text-[8px] md:text-[10px] font-bold text-yellow-400 border-yellow-500 hover:text-yellow-300 hover:border-yellow-400">
+        <button onclick="openSlideShow()" class="pixel-btn pixel-btn-yellow mt-2 py-3 px-2 text-[8px] md:text-[10px] font-bold">
             TS CAP FR
         </button>
     </aside>
@@ -231,7 +252,7 @@
             <button onclick="openSettings()" class="pixel-btn h-10 w-10 md:h-11 md:w-11 flex items-center justify-center text-xl md:text-2xl pb-1" title="Settings">
                 ⚙
             </button>
-            <button onclick="openCreditsModal()" class="pixel-btn h-10 md:h-11 px-5 text-[8px] md:text-[10px] font-bold text-white tracking-widest flex items-center justify-center">
+            <button onclick="openCreditsModal()" class="pixel-btn h-10 md:h-11 px-5 text-[8px] md:text-[10px] font-bold tracking-widest flex items-center justify-center">
                 CREDITS
             </button>
         </div>
@@ -262,14 +283,14 @@
         <div class="pixel-panel p-6 max-w-2xl w-full border-t-4 border-t-yellow-400 flex flex-col gap-6 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-[#38bdf8] pb-4">
                 <h2 id="slide-title" class="text-yellow-400 text-xs md:text-sm uppercase tracking-wider">REAL TALK</h2>
-                <span id="slide-counter" class="text-[7px] md:text-[9px] text-slate-400">SLIDE 1 / 5</span>
+                <span id="slide-counter" class="text-[7px] md:text-[9px] text-slate-400">SLIDE 1 of 5</span>
             </div>
             <div class="border-2 border-[#38bdf8] bg-black p-2 mx-auto w-2/3 shadow-[0_0_10px_rgba(56,189,248,0.3)_inset] flex items-center justify-center">
                 <img id="slide-img" src="Meme1.png" alt="Meme Slide" class="w-full h-auto max-h-[220px] object-contain image-above-crt">
             </div>
             <p id="slide-text" class="text-slate-200 text-[8px] md:text-[10px] leading-[2.2] text-center px-4"></p>
             <div class="flex gap-4 pt-2">
-                <button id="slide-btn" onclick="nextSlide()" class="pixel-btn w-full py-4 text-[9px] md:text-[11px] text-yellow-300 border-yellow-600 hover:text-black">ILL HEAR U OUT</button>
+                <button id="slide-btn" onclick="nextSlide()" class="pixel-btn pixel-btn-yellow w-full py-4 text-[9px] md:text-[11px]">ILL HEAR U OUT</button>
             </div>
         </div>
     </div>
@@ -340,7 +361,10 @@
             <h2 class="text-white text-xs md:text-sm uppercase tracking-wider text-center mb-4">SETTINGS</h2>
             <button id="btn-music" onclick="toggleMusic()" class="pixel-btn w-full py-4 text-[10px]">MUSIC: ON</button>
             <button id="btn-sfx" onclick="toggleSFX()" class="pixel-btn w-full py-4 text-[10px]">SFX: ON</button>
-            <button id="btn-fullscreen" onclick="toggleFullscreen()" class="pixel-btn w-full py-4 text-[10px]">FULLSCREEN</button>
+            <div class="flex gap-4 w-full">
+                <button id="btn-fullscreen" onclick="toggleFullscreen()" class="pixel-btn w-1/2 py-4 text-[10px]">FULLSCREEN</button>
+                <button onclick="goToStartScreen()" class="pixel-btn pixel-btn-red w-1/2 py-4 text-[10px]">RESTART</button>
+            </div>
             <button onclick="closeSettings()" class="pixel-btn w-full py-3 mt-4 text-[9px] border-[#38bdf8] hover:bg-[#38bdf8] hover:text-[#000]">CLOSE</button>
         </div>
     </div>
@@ -361,7 +385,7 @@
     <div id="game-over-screen" class="hidden absolute inset-0 z-[10005] flex flex-col items-center justify-center bg-black p-6">
         <h1 class="text-xl md:text-3xl text-red-500 mb-10 text-center leading-[2] animate-pulse">PREMIERSHIP<br>TERMINATED</h1>
         <p id="game-over-msg" class="text-slate-300 text-[8px] md:text-[10px] text-center max-w-xl mb-12 leading-[2]"></p>
-        <button onclick="restartGame()" class="pixel-btn px-8 py-4 text-[10px]">TRY AGAIN</button>
+        <button onclick="restartGame()" class="pixel-btn pixel-btn-red px-8 py-4 text-[10px]">TRY AGAIN</button>
     </div>
 
     <script>
@@ -527,6 +551,33 @@
         function closeSettings() {
             document.getElementById('settings-modal').classList.add('hidden');
         }
+
+        function goToStartScreen() {
+            closeSettings();
+            gameActive = false;
+            
+            // Hide all modals
+            document.getElementById('crisis-modal').classList.add('hidden');
+            document.getElementById('debrief-modal').classList.add('hidden');
+            document.getElementById('game-over-screen').classList.add('hidden');
+
+            // Restore Start Screen
+            const startScreen = document.getElementById('start-screen');
+            startScreen.classList.remove('animate-fade-out');
+            
+            // Reset UI components
+            const uis = ['left-sidebar', 'top-right-ui', 'bottom-right-ui'];
+            uis.forEach(id => {
+                const el = document.getElementById(id);
+                el.classList.remove('animate-ui-emerge');
+                el.classList.add('opacity-0');
+            });
+
+            // Reset Map
+            const mapContainer = document.getElementById('map-container');
+            mapContainer.classList.remove('animate-map-wipe');
+            mapContainer.classList.add('opacity-0');
+        }
         // --------------------------------
 
         // Slideshow Data
@@ -572,7 +623,7 @@
 
         function renderSlide() {
             const slide = slides[currentSlideIdx];
-            document.getElementById('slide-counter').innerText = `SLIDE ${currentSlideIdx + 1} / ${slides.length}`;
+            document.getElementById('slide-counter').innerText = `SLIDE ${currentSlideIdx + 1} of ${slides.length}`;
             document.getElementById('slide-img').src = slide.img;
             document.getElementById('slide-text').innerText = slide.text;
             document.getElementById('slide-btn').innerText = slide.btn;
