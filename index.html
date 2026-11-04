@@ -10,58 +10,82 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
+        :root {
+            --term-blue: #38bdf8; /* sky-400 equivalent */
+            --term-dark: #001021;
+            --term-darker: #000510;
+            --term-glow: 0 0 5px rgba(56, 189, 248, 0.6), 0 0 10px rgba(56, 189, 248, 0.4);
+        }
+
         body { 
             font-family: 'Press Start 2P', cursive; 
-            background-color: #0f172a; 
-            color: #f8fafc; 
+            background-color: var(--term-darker); 
+            color: var(--term-blue); 
             overflow: hidden; 
             margin: 0; 
             padding: 0; 
             -webkit-font-smoothing: none;
+            /* Global text glow that inherits the text color! */
+            text-shadow: 0 0 5px currentColor;
+        }
+
+        /* CRT Scanlines and Vignette Overlay */
+        .crt-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 9999;
+            background: linear-gradient(
+                rgba(18, 16, 16, 0) 50%,
+                rgba(0, 0, 0, 0.25) 50%),
+                linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 3px, 3px 100%;
+            box-shadow: inset 0 0 100px rgba(0,0,0,0.9);
         }
         
         .pixel-btn {
-            background: #1e293b;
-            border: 4px solid #475569;
-            color: #38bdf8;
+            background: var(--term-darker);
+            border: 2px solid var(--term-blue);
+            color: var(--term-blue);
             text-transform: uppercase;
             transition: all 0.2s;
             cursor: pointer;
-            box-shadow: 4px 4px 0px 0px #020617;
+            box-shadow: 0 0 8px var(--term-blue) inset, 0 0 8px var(--term-blue);
         }
         .pixel-btn:hover { 
-            background: #334155; 
-            border-color: #38bdf8; 
-            color: #fff; 
-            transform: translate(-2px, -2px);
-            box-shadow: 6px 6px 0px 0px #020617;
+            background: var(--term-blue); 
+            border-color: var(--term-blue); 
+            color: #000; 
+            text-shadow: none;
         }
         .pixel-btn:active {
-            transform: translate(2px, 2px);
-            box-shadow: 0px 0px 0px 0px #020617;
+            transform: scale(0.98);
         }
 
         .pixel-panel {
-            background: #1e293b;
-            border: 4px solid #475569;
-            box-shadow: 8px 8px 0px 0px #020617;
+            background: var(--term-dark);
+            border: 2px solid var(--term-blue);
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.4) inset, 0 0 15px rgba(56, 189, 248, 0.2);
         }
         
-        /* Map Styles */
-        .europe-path { fill: #111827; stroke: #334155; stroke-width: 1px; opacity: 0.6; }
-        .country-path { fill: #1e293b; stroke: #475569; stroke-width: 2px; transition: fill 0.3s; }
-        .country-path:hover { fill: #334155; }
-        .country-border { fill: none; stroke: #94a3b8; stroke-width: 2px; stroke-dasharray: 4,4; }
+        /* Map Styles - Blue CRT adaptation */
+        .europe-path { fill: #00152b; stroke: #004080; stroke-width: 1px; opacity: 1; }
+        .country-path { fill: #001021; stroke: var(--term-blue); stroke-width: 2px; transition: fill 0.3s; }
+        .country-path:hover { fill: #0284c7; }
+        .country-border { fill: none; stroke: #0284c7; stroke-width: 1px; stroke-dasharray: 4,4; }
         
-        .subunit-label { fill: #64748b; font-family: 'Press Start 2P', cursive; font-size: 10px; text-anchor: middle; pointer-events: none; text-transform: uppercase; }
-        .city-point { fill: #facc15; stroke: #000; stroke-width: 2px; }
+        .subunit-label { fill: var(--term-blue); font-family: 'Press Start 2P', cursive; font-size: 10px; text-anchor: middle; pointer-events: none; text-transform: uppercase; }
+        .city-point { fill: #facc15; stroke: #000; stroke-width: 2px; } /* Kept original yellow */
         .city-label { fill: #cbd5e1; font-family: 'Press Start 2P', cursive; font-size: 6px; pointer-events: none; }
         
-        .euro-city-point { fill: #64748b; stroke: #000; stroke-width: 1px; }
-        .euro-city-label { fill: #475569; font-family: 'Press Start 2P', cursive; font-size: 4px; pointer-events: none; }
+        .euro-city-point { fill: #0ea5e9; stroke: #000; stroke-width: 1px; }
+        .euro-city-label { fill: #0284c7; font-family: 'Press Start 2P', cursive; font-size: 4px; pointer-events: none; }
 
         /* Seas Labels */
-        .sea-label { fill: #334155; font-family: 'Press Start 2P', cursive; font-size: 7px; text-anchor: middle; pointer-events: none; text-transform: uppercase; opacity: 0.8; letter-spacing: 2px; }
+        .sea-label { fill: #0284c7; font-family: 'Press Start 2P', cursive; font-size: 7px; text-anchor: middle; pointer-events: none; text-transform: uppercase; opacity: 0.8; letter-spacing: 2px; }
 
         /* Crisis Alert Animation */
         @keyframes pulse-ring { 
@@ -74,33 +98,59 @@
             transform-origin: center;
             transform-box: fill-box;
         }
+
+        /* Image Phosphor Filters - Blue theme */
+        .crt-image {
+            image-rendering: pixelated;
+        }
+
+        .image-above-crt {
+            position: relative;
+            z-index: 10000;
+        }
+
+        /* Entrance Animations */
+        @keyframes fade-out-screen {
+            to { opacity: 0; visibility: hidden; z-index: -1; }
+        }
+        .animate-fade-out {
+            animation: fade-out-screen 0.5s ease-out forwards;
+        }
+
+        @keyframes ui-emerge {
+            0% { opacity: 0; filter: brightness(0.2); }
+            100% { opacity: 1; filter: brightness(1); }
+        }
+        .animate-ui-emerge {
+            animation: ui-emerge 2.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        @keyframes map-wipe {
+            0% { clip-path: inset(0 0 100% 0); opacity: 0; }
+            1% { opacity: 1; clip-path: inset(0 0 100% 0); }
+            100% { clip-path: inset(0 0 0 0); opacity: 1; }
+        }
+        .animate-map-wipe {
+            animation: map-wipe 4s linear forwards;
+        }
     </style>
 </head>
-<body class="h-screen w-screen flex flex-row bg-slate-900 overflow-hidden">
-    <!-- Start Screen -->
-    <div id="start-screen" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-900 bg-opacity-95 backdrop-blur-sm">
-        <h1 class="text-xl md:text-3xl text-center text-sky-400 mb-10 leading-relaxed px-4 shadow-black drop-shadow-lg">DOWNING STREET:<br><br>CLIMATE CRISIS</h1>
-        <div class="text-[8px] md:text-[10px] text-center max-w-2xl px-6 text-slate-300 mb-12 leading-[2.5] space-y-6">
-            <p>It is <span class="text-white">2018</span>. You have been elected the Prime Minister of the UK.</p>
-            <p>An intense term from <span class="text-white">2018 to 2025</span>, filled with severe climate and economic crises awaits.</p>
-            <p>Balance stability <span class="text-yellow-400">Socio-Economically</span> and in <span class="text-green-400">Overall Sustainability</span>. If either drops below 50%, you will face a leadership contest and be sacked.</p>
-            <p>The England annual mean temperature uses real-world data provided by the Met Office, it is unalterable by your decisions. Good luck.</p>
-        </div>
-        <button id="start-btn" onclick="startGame()" class="pixel-btn px-8 py-4 text-[10px] md:text-sm">ENTER NO. 10</button>
-    </div>
+<body class="h-screen w-screen flex flex-row bg-[#000510] overflow-hidden text-[#38bdf8]">
+    <!-- CRT Overlay -->
+    <div class="crt-overlay"></div>
 
     <!-- Left Info Sidebar -->
-    <aside class="w-64 md:w-80 h-full bg-slate-800 border-r-4 border-slate-600 shadow-[4px_0_15px_rgba(0,0,0,0.5)] z-40 p-4 flex flex-col gap-3 overflow-y-auto shrink-0 relative">
-        <h2 class="text-[9px] md:text-[11px] text-center font-bold text-slate-200 leading-relaxed uppercase drop-shadow-md">UNITED KINGDOM OF GREAT BRITAIN AND NORTHERN IRELAND</h2>
+    <aside id="left-sidebar" class="w-64 md:w-80 h-[calc(100vh-2rem)] my-4 ml-4 pixel-panel p-4 flex flex-col gap-3 overflow-y-auto shrink-0 relative z-10 opacity-0">
+        <h2 class="text-[9px] md:text-[11px] text-center font-bold text-[#38bdf8] leading-relaxed uppercase">UNITED KINGDOM OF GREAT BRITAIN AND NORTHERN IRELAND</h2>
         
         <!-- Single Fringed Retro Frame for Flag -->
-        <div class="border-[4px] border-solid border-slate-500 bg-slate-900 p-1 mx-auto w-1/2 md:w-5/12 shadow-inner mt-1 mb-2">
-            <img src="Flag of the UK.png" alt="UK Flag" class="w-full h-auto opacity-90 contrast-125" style="image-rendering: pixelated;">
+        <div class="border-2 border-[#38bdf8] bg-black p-1 mx-auto w-1/2 md:w-5/12 shadow-[0_0_10px_rgba(56,189,248,0.5)_inset] mt-1 mb-2">
+            <img src="Flag of the UK.png" alt="UK Flag" class="w-full h-auto crt-image opacity-90 contrast-125 image-above-crt">
         </div>
         
         <!-- Double Fringed Retro Frame for Portrait (Smaller) -->
-        <div class="border-[6px] border-double border-slate-500 bg-slate-900 p-1 mx-auto w-1/2 md:w-5/12 shadow-inner mb-2 cursor-pointer hover:border-yellow-400 transition-colors" onclick="developerCheat()">
-            <img id="monarch-portrait" src="QEII portrait.png" alt="Monarch" class="w-full h-auto opacity-90 grayscale-[20%] sepia-[20%] contrast-125" style="image-rendering: pixelated;">
+        <div class="border-2 border-[#38bdf8] bg-black p-1 mx-auto w-1/2 md:w-5/12 shadow-[0_0_10px_rgba(56,189,248,0.5)_inset] mb-2 cursor-pointer hover:bg-[#002a50] transition-colors" onclick="developerCheat()">
+            <img id="monarch-portrait" src="QEII portrait.png" alt="Monarch" class="w-full h-auto crt-image opacity-90 contrast-125 image-above-crt">
         </div>
         
         <div class="text-center text-[7px] md:text-[8px] text-slate-300">
@@ -108,78 +158,88 @@
             <span id="monarch-name" class="text-sky-300 text-[8px] md:text-[10px]">Elizabeth II</span>
         </div>
         
-        <hr class="border-t-2 border-slate-600 border-dashed my-0.5">
-        <div class="flex justify-between items-center text-[7px] md:text-[8px] text-slate-300 py-0.5">
-            <span>Prime Minister</span>
-            <span class="text-white text-right">You</span>
-        </div>
-        <hr class="border-t-2 border-slate-600 border-dashed my-0.5">
-        <div class="flex justify-between items-center text-[7px] md:text-[8px] text-slate-300 py-0.5">
-            <span>Climate</span>
-            <span class="text-white text-right">Temperate oceanic</span>
+        <div class="flex flex-col gap-2 my-2">
+            <hr class="border-t border-[#38bdf8] border-dashed opacity-50">
+            <div class="flex justify-between items-center text-[7px] md:text-[8px] text-slate-300 py-0.5">
+                <span>Prime Minister</span>
+                <span class="text-white text-right">You</span>
+            </div>
+            <hr class="border-t border-[#38bdf8] border-dashed opacity-50">
+            <div class="flex justify-between items-center text-[7px] md:text-[8px] text-slate-300 py-0.5">
+                <span>Climate</span>
+                <span class="text-white text-right">Temperate oceanic</span>
+            </div>
         </div>
         
-        <p class="text-[5px] md:text-[6.5px] text-slate-400 mt-2 leading-[2.2] text-justify tracking-wide">
+        <p class="text-[5px] md:text-[6.5px] text-slate-400 mt-1 leading-[2.2] text-justify tracking-wide">
             <span class="text-yellow-400">According to the Climate Change Committee, the UK's climate is currently shifting towards hotter summers and warmer winters, as of 2023, the Government has 'yet to change the UK’s inadequate approach to tackling climate risks' and it 'must act without further delay to improve the national approach to climate resilience.' (Pinchbeck et al., 2025)</span>
         </p>
 
         <!-- TS CAP FR Button -->
-        <button onclick="openSlideShow()" class="pixel-btn mt-2 py-3 px-2 text-[8px] md:text-[10px] font-bold text-yellow-400 border-yellow-500 hover:text-yellow-300 hover:border-yellow-400 shadow-[2px_2px_0px_0px_#020617]">
+        <button onclick="openSlideShow()" class="pixel-btn mt-2 py-3 px-2 text-[8px] md:text-[10px] font-bold text-yellow-400 border-yellow-500 hover:text-yellow-300 hover:border-yellow-400">
             TS CAP FR
         </button>
     </aside>
 
     <!-- Main Game Area (Map) -->
-    <main class="flex-1 relative overflow-hidden bg-slate-900 flex items-center justify-center p-2">
+    <main class="flex-1 relative overflow-hidden bg-[#000510] flex items-center justify-center p-2">
         
-        <!-- Top Right Info Box (Stats) -->
-        <div class="absolute right-4 top-4 z-40 w-64 md:w-80 pixel-panel bg-slate-800 p-4 shadow-xl flex flex-col gap-4">
-            <div class="flex justify-between bg-slate-900 p-3 border-2 border-slate-600 shadow-inner">
-                <div class="text-center w-1/2 border-r-2 border-slate-700">
-                    <div class="text-[6px] md:text-[8px] text-slate-400 uppercase tracking-widest mb-2">Year</div>
-                    <div id="ui-year" class="text-xs md:text-sm text-white">2018</div>
-                </div>
-                <div class="text-center w-1/2">
-                    <div class="text-[6px] md:text-[8px] text-slate-400 uppercase tracking-widest mb-2">Mean Temp</div>
-                    <div id="ui-temp" class="text-xs md:text-sm text-red-400 drop-shadow-[0_0_5px_rgba(248,113,113,0.5)]">9.49°C</div>
-                </div>
-            </div>
+        <div id="map-container" class="relative w-full h-full max-h-full flex justify-center items-center opacity-0 z-0">
+            <svg id="d3-map" class="w-full h-full drop-shadow-2xl"></svg>
+        </div>
 
-            <div class="space-y-4 mt-1">
-                <div class="flex flex-col gap-2">
-                    <div class="flex justify-between items-end">
-                        <span class="text-[6px] md:text-[7px] text-slate-300 uppercase tracking-widest leading-tight">Overall Sustainability:</span>
-                        <span id="sust-val" class="text-[7px] md:text-[8px] text-green-400">100%</span>
+        <!-- Top Right Wrapper -->
+        <div id="top-right-ui" class="absolute right-4 top-4 flex flex-col items-end gap-2 z-10 opacity-0">
+            <!-- Top Right Info Box (Stats) -->
+            <div class="w-64 md:w-80 pixel-panel p-4 flex flex-col gap-4">
+                <div class="flex justify-between bg-[#000510] p-3 border border-[#38bdf8] shadow-[0_0_8px_rgba(56,189,248,0.3)_inset]">
+                    <div class="text-center w-1/2 border-r border-[#38bdf8]">
+                        <div class="text-[6px] md:text-[8px] text-slate-400 uppercase tracking-widest mb-2">Year</div>
+                        <div id="ui-year" class="text-xs md:text-sm text-white">2018</div>
                     </div>
-                    <div class="w-full bg-slate-900 h-4 border-2 border-slate-500 p-[2px]">
-                        <div id="sust-bar" class="h-full bg-green-500 transition-all duration-500 ease-out" style="width: 100%;"></div>
+                    <div class="text-center w-1/2">
+                        <div class="text-[6px] md:text-[8px] text-slate-400 uppercase tracking-widest mb-2">Mean Temp</div>
+                        <div id="ui-temp" class="text-xs md:text-sm text-red-400 drop-shadow-[0_0_5px_rgba(248,113,113,0.5)]">9.49°C</div>
                     </div>
                 </div>
-                <div class="flex flex-col gap-2">
-                    <div class="flex justify-between items-end">
-                        <span class="text-[6px] md:text-[7px] text-slate-300 uppercase tracking-widest leading-tight">Socio-Economic Balance:</span>
-                        <span id="eco-val" class="text-[7px] md:text-[8px] text-yellow-400">100%</span>
+
+                <div class="space-y-4 mt-1">
+                    <div class="flex flex-col gap-2">
+                        <div class="flex justify-between items-end">
+                            <span class="text-[6px] md:text-[7px] text-slate-300 uppercase tracking-widest leading-tight">Overall Sustainability:</span>
+                            <span id="sust-val" class="text-[7px] md:text-[8px] text-green-400">100%</span>
+                        </div>
+                        <div class="w-full bg-[#000510] h-4 border border-[#38bdf8] p-[2px]">
+                            <div id="sust-bar" class="h-full bg-green-500 transition-all duration-500 ease-out" style="width: 100%;"></div>
+                        </div>
                     </div>
-                    <div class="w-full bg-slate-900 h-4 border-2 border-slate-500 p-[2px]">
-                        <div id="eco-bar" class="h-full bg-yellow-500 transition-all duration-500 ease-out" style="width: 100%;"></div>
+                    <div class="flex flex-col gap-2">
+                        <div class="flex justify-between items-end">
+                            <span class="text-[6px] md:text-[7px] text-slate-300 uppercase tracking-widest leading-tight">Socio-Economic Balance:</span>
+                            <span id="eco-val" class="text-[7px] md:text-[8px] text-yellow-400">100%</span>
+                        </div>
+                        <div class="w-full bg-[#000510] h-4 border border-[#38bdf8] p-[2px]">
+                            <div id="eco-bar" class="h-full bg-yellow-500 transition-all duration-500 ease-out" style="width: 100%;"></div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- CREDITS Button at bottom right -->
-        <button onclick="openCreditsModal()" class="absolute right-4 bottom-4 z-40 pixel-btn py-3 px-5 text-[8px] md:text-[10px] font-bold text-white tracking-widest shadow-[4px_4px_0px_0px_#020617]">
-            CREDITS
-        </button>
-
-        <div id="map-container" class="relative w-full h-full max-w-4xl max-h-full flex justify-center items-center">
-            <svg id="d3-map" class="w-full h-full drop-shadow-2xl"></svg>
+        <!-- Bottom Right Buttons -->
+        <div id="bottom-right-ui" class="absolute right-4 bottom-4 flex items-center gap-2 z-10 opacity-0">
+            <button onclick="openSettings()" class="pixel-btn h-10 w-10 md:h-11 md:w-11 flex items-center justify-center text-xl md:text-2xl pb-1" title="Settings">
+                ⚙
+            </button>
+            <button onclick="openCreditsModal()" class="pixel-btn h-10 md:h-11 px-5 text-[8px] md:text-[10px] font-bold text-white tracking-widest flex items-center justify-center">
+                CREDITS
+            </button>
         </div>
     </main>
 
     <!-- Crisis Modal -->
-    <div id="crisis-modal" class="hidden absolute inset-0 z-50 flex items-center justify-center bg-slate-900/90 backdrop-blur-sm p-4">
-        <div class="pixel-panel p-6 max-w-2xl w-full border-t-8 border-t-red-500">
+    <div id="crisis-modal" class="hidden absolute inset-0 z-[10005] flex items-center justify-center bg-[#000510]/90 p-4">
+        <div class="pixel-panel p-6 max-w-2xl w-full border-t-4 border-t-red-500">
             <h2 id="modal-title" class="text-red-400 text-xs md:text-sm mb-6 uppercase tracking-wider leading-relaxed">CRISIS ALERT</h2>
             <p id="modal-desc" class="text-slate-300 text-[8px] md:text-[10px] mb-8 leading-[2]"></p>
             <div id="modal-options" class="flex flex-col gap-4">
@@ -189,8 +249,8 @@
     </div>
 
     <!-- Debrief Modal -->
-    <div id="debrief-modal" class="hidden absolute inset-0 z-50 flex items-center justify-center bg-slate-900/90 backdrop-blur-sm p-4">
-        <div class="pixel-panel p-6 max-w-2xl w-full border-t-8 border-t-sky-500">
+    <div id="debrief-modal" class="hidden absolute inset-0 z-[10005] flex items-center justify-center bg-[#000510]/90 p-4">
+        <div class="pixel-panel p-6 max-w-2xl w-full border-t-4 border-t-sky-500">
             <h2 id="debrief-title" class="text-sky-400 text-xs md:text-sm mb-6 uppercase tracking-wider leading-relaxed">DEBRIEF</h2>
             <p id="debrief-text" class="text-slate-300 text-[8px] md:text-[10px] mb-8 leading-[2] whitespace-pre-wrap"></p>
             <button onclick="closeDebrief()" class="pixel-btn w-full py-4 text-[10px]">CONTINUE TO NO. 10</button>
@@ -198,28 +258,28 @@
     </div>
 
     <!-- Slideshow Modal -->
-    <div id="slideshow-modal" class="hidden absolute inset-0 z-50 flex items-center justify-center bg-slate-900/95 backdrop-blur-md p-4">
-        <div class="pixel-panel p-6 max-w-2xl w-full border-t-8 border-t-yellow-400 flex flex-col gap-6 max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center border-b-2 border-slate-700 pb-4">
+    <div id="slideshow-modal" class="hidden absolute inset-0 z-[10005] flex items-center justify-center bg-[#000510]/95 p-4">
+        <div class="pixel-panel p-6 max-w-2xl w-full border-t-4 border-t-yellow-400 flex flex-col gap-6 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-[#38bdf8] pb-4">
                 <h2 id="slide-title" class="text-yellow-400 text-xs md:text-sm uppercase tracking-wider">REAL TALK</h2>
                 <span id="slide-counter" class="text-[7px] md:text-[9px] text-slate-400">SLIDE 1 / 5</span>
             </div>
-            <div class="border-[4px] border-slate-600 bg-slate-900 p-2 mx-auto w-2/3 shadow-inner flex items-center justify-center">
-                <img id="slide-img" src="Meme1.png" alt="Meme Slide" class="w-full h-auto max-h-[220px] object-contain" style="image-rendering: pixelated;">
+            <div class="border-2 border-[#38bdf8] bg-black p-2 mx-auto w-2/3 shadow-[0_0_10px_rgba(56,189,248,0.3)_inset] flex items-center justify-center">
+                <img id="slide-img" src="Meme1.png" alt="Meme Slide" class="w-full h-auto max-h-[220px] object-contain image-above-crt">
             </div>
             <p id="slide-text" class="text-slate-200 text-[8px] md:text-[10px] leading-[2.2] text-center px-4"></p>
             <div class="flex gap-4 pt-2">
-                <button id="slide-btn" onclick="nextSlide()" class="pixel-btn w-full py-4 text-[9px] md:text-[11px] text-yellow-300 border-yellow-600 hover:text-white">ILL HEAR U OUT</button>
+                <button id="slide-btn" onclick="nextSlide()" class="pixel-btn w-full py-4 text-[9px] md:text-[11px] text-yellow-300 border-yellow-600 hover:text-black">ILL HEAR U OUT</button>
             </div>
         </div>
     </div>
 
     <!-- Credits Modal -->
-    <div id="credits-modal" class="hidden absolute inset-0 z-50 flex items-center justify-center bg-slate-900/90 backdrop-blur-sm p-4">
-        <div class="pixel-panel p-6 max-w-2xl w-full border-t-8 border-t-sky-500 flex flex-col gap-6">
+    <div id="credits-modal" class="hidden absolute inset-0 z-[10005] flex items-center justify-center bg-[#000510]/90 p-4">
+        <div class="pixel-panel p-6 max-w-2xl w-full border-t-4 border-t-sky-500 flex flex-col gap-6">
             <h2 class="text-sky-400 text-xs md:text-sm uppercase tracking-wider text-center">CREDITS</h2>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-[7px] md:text-[9px] text-slate-300 bg-slate-900 p-4 border-2 border-slate-700 leading-[2.2]">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-[7px] md:text-[9px] text-slate-300 bg-[#001021] p-4 border border-[#38bdf8] leading-[2.2] shadow-[0_0_8px_rgba(56,189,248,0.2)_inset]">
                 <div class="space-y-4">
                     <div>
                         <span class="text-yellow-400 font-bold block">Concept & Design</span>
@@ -266,7 +326,7 @@
                 </div>
             </div>
 
-            <div class="text-center text-[7px] md:text-[8px] text-slate-400 border-t-2 border-slate-700 pt-4">
+            <div class="text-center text-[7px] md:text-[8px] text-slate-400 border-t border-[#38bdf8] pt-4">
                 <span class="text-white font-bold">Coded in HTML5 with Google Gemini</span>
             </div>
 
@@ -274,9 +334,32 @@
         </div>
     </div>
 
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="hidden absolute inset-0 z-[10005] flex items-center justify-center bg-[#000510]/90 p-4">
+        <div class="pixel-panel p-6 max-w-sm w-full border-t-4 border-t-slate-400 flex flex-col gap-4">
+            <h2 class="text-white text-xs md:text-sm uppercase tracking-wider text-center mb-4">SETTINGS</h2>
+            <button id="btn-music" onclick="toggleMusic()" class="pixel-btn w-full py-4 text-[10px]">MUSIC: ON</button>
+            <button id="btn-sfx" onclick="toggleSFX()" class="pixel-btn w-full py-4 text-[10px]">SFX: ON</button>
+            <button id="btn-fullscreen" onclick="toggleFullscreen()" class="pixel-btn w-full py-4 text-[10px]">FULLSCREEN</button>
+            <button onclick="closeSettings()" class="pixel-btn w-full py-3 mt-4 text-[9px] border-[#38bdf8] hover:bg-[#38bdf8] hover:text-[#000]">CLOSE</button>
+        </div>
+    </div>
+
+    <!-- Start Screen -->
+    <div id="start-screen" class="absolute inset-0 z-[10005] flex flex-col items-center justify-center bg-[#000510] p-4">
+        <h1 class="text-xl md:text-3xl text-center text-sky-400 mb-10 leading-relaxed px-4 animate-pulse">DOWNING STREET:<br><br>CLIMATE CRISIS</h1>
+        <div class="text-[8px] md:text-[10px] text-center max-w-2xl px-6 text-slate-300 mb-12 leading-[2.5] space-y-6">
+            <p>It is <span class="text-white">2018</span>. You have been elected the Prime Minister of the UK.</p>
+            <p>An intense term from <span class="text-white">2018 to 2025</span>, filled with severe climate and economic crises awaits.</p>
+            <p>Balance stability <span class="text-yellow-400">Socio-Economically</span> and in <span class="text-green-400">Overall Sustainability</span>. If either drops below 50%, you will face a leadership contest and be sacked.</p>
+            <p>The England annual mean temperature uses real-world data provided by the Met Office, it is unalterable by your decisions. Good luck.</p>
+        </div>
+        <button id="start-btn" onclick="startGame()" class="pixel-btn px-8 py-4 text-[10px] md:text-sm">ENTER NO. 10</button>
+    </div>
+
     <!-- Game Over Screen -->
-    <div id="game-over-screen" class="hidden absolute inset-0 z-[60] flex flex-col items-center justify-center bg-black p-6">
-        <h1 class="text-xl md:text-3xl text-red-500 mb-10 text-center leading-[2]">PREMIERSHIP<br>TERMINATED</h1>
+    <div id="game-over-screen" class="hidden absolute inset-0 z-[10005] flex flex-col items-center justify-center bg-black p-6">
+        <h1 class="text-xl md:text-3xl text-red-500 mb-10 text-center leading-[2] animate-pulse">PREMIERSHIP<br>TERMINATED</h1>
         <p id="game-over-msg" class="text-slate-300 text-[8px] md:text-[10px] text-center max-w-xl mb-12 leading-[2]"></p>
         <button onclick="restartGame()" class="pixel-btn px-8 py-4 text-[10px]">TRY AGAIN</button>
     </div>
@@ -315,7 +398,7 @@
 
         // Surrounding Seas & Oceans
         const seaLabels = [
-            { name: "ATLANTIC OCEAN", coords: [-12.0, 53.5] },
+            { name: "ATLANTIC OCEAN", coords: [-14.0, 54.0] },
             { name: "NORTH SEA", coords: [3.5, 56.0] },
             { name: "ENGLISH CHANNEL", coords: [-1.5, 49.8] },
             { name: "IRISH SEA", coords: [-5.2, 53.8] }
@@ -328,6 +411,8 @@
         let activeProblems = [];
         let gameActive = false;
         let mapProjection = null;
+        let musicEnabled = true;
+        let sfxEnabled = true;
 
         // --- Audio System Scaffolding (Local Files) ---
         const bgmTracks = [
@@ -342,10 +427,13 @@
         bgMusic.addEventListener('ended', () => {
             currentBgmIndex = (currentBgmIndex + 1) % bgmTracks.length;
             bgMusic.src = bgmTracks[currentBgmIndex];
-            bgMusic.play().catch(e => console.warn("Browser blocked next track playback", e));
+            if (musicEnabled) {
+                bgMusic.play().catch(e => console.warn("Browser blocked next track playback", e));
+            }
         });
         
         const startBGM = () => {
+            if (!musicEnabled) return;
             if (bgMusic.paused) {
                 const playPromise = bgMusic.play();
                 if (playPromise !== undefined) {
@@ -376,6 +464,7 @@
         slideSound.volume = 1.0;
 
         function playSFX(type) {
+            if (!sfxEnabled) return;
             if (type === 'alertClick') {
                 alertSound.currentTime = 0;
                 alertSound.volume = 1.0;
@@ -389,6 +478,54 @@
                 slideSound.volume = 1.0;
                 slideSound.play().catch(e => console.warn("Audio play blocked", e));
             }
+        }
+        
+        function toggleMusic() {
+            musicEnabled = !musicEnabled;
+            const btn = document.getElementById('btn-music');
+            if (musicEnabled) {
+                btn.innerText = "MUSIC: ON";
+                bgMusic.play().catch(() => {});
+            } else {
+                btn.innerText = "MUSIC: OFF";
+                bgMusic.pause();
+            }
+        }
+
+        function toggleSFX() {
+            sfxEnabled = !sfxEnabled;
+            const btn = document.getElementById('btn-sfx');
+            btn.innerText = sfxEnabled ? "SFX: ON" : "SFX: OFF";
+        }
+
+        function toggleFullscreen() {
+            const btn = document.getElementById('btn-fullscreen');
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch((err) => {
+                    console.warn(`Error attempting to enable fullscreen: ${err.message}`);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        document.addEventListener('fullscreenchange', () => {
+            const btn = document.getElementById('btn-fullscreen');
+            if (!document.fullscreenElement) {
+                btn.innerText = "FULLSCREEN";
+            } else {
+                btn.innerText = "EXIT FULLSCREEN";
+            }
+        });
+
+        function openSettings() {
+            document.getElementById('settings-modal').classList.remove('hidden');
+        }
+
+        function closeSettings() {
+            document.getElementById('settings-modal').classList.add('hidden');
         }
         // --------------------------------
 
@@ -474,7 +611,7 @@
             });
         }
 
-        // Problem Database - Brute-force precision single-solution difficulty (Total net loss = 98 combined points)
+        // Problem Database
         const gameEvents = {
             2018: [
                 {
@@ -854,133 +991,146 @@
             ]
         };
 
-        // Map Initialization (D3.js & TopoJSON with detailed European coastline and sea labels)
+        let euroCountriesData, ukFeaturesData, ukTopologyData;
+
         async function loadMapData() {
-            const svg = d3.select("#d3-map");
             const mapContainer = document.getElementById("map-container");
+            const svg = d3.select("#d3-map");
+            
             const width = mapContainer.clientWidth || 800;
             const height = mapContainer.clientHeight || 800;
             
             svg.attr("viewBox", `0 0 ${width} ${height}`);
 
             try {
-                // Fetch Europe TopoJSON for background context
                 const euroResponse = await fetch('https://unpkg.com/world-atlas@2.0.2/countries-50m.json');
                 const euroTopology = await euroResponse.json();
-                const euroCountries = topojson.feature(euroTopology, euroTopology.objects.countries).features;
+                euroCountriesData = topojson.feature(euroTopology, euroTopology.objects.countries).features;
 
-                // Fetch UK TopoJSON
                 const ukResponse = await fetch('https://bost.ocks.org/mike/map/uk.json', { cache: 'force-cache' });
-                const ukTopology = await ukResponse.json();
-                const subunits = topojson.feature(ukTopology, ukTopology.objects.subunits);
-                const ukFeatures = subunits.features.filter(d => d.id !== 'IRL');
+                ukTopologyData = await ukResponse.json();
+                const subunits = topojson.feature(ukTopologyData, ukTopologyData.objects.subunits);
+                ukFeaturesData = subunits.features.filter(d => d.id !== 'IRL');
 
-                // Center projection precisely on the UK
-                mapProjection = d3.geoMercator()
-                    .center([-2.0, 54.5])
-                    .scale(width * 2.8)
-                    .translate([width / 2, height / 2]);
-                
-                const pathGenerator = d3.geoPath().projection(mapProjection);
-
-                // Draw detailed European background map
-                svg.selectAll('.europe-path')
-                    .data(euroCountries)
-                    .enter().append('path')
-                    .attr('class', 'europe-path')
-                    .attr('d', pathGenerator);
-
-                // Draw Surrounding Seas & Oceans Labels
-                svg.selectAll(".sea-label")
-                    .data(seaLabels)
-                    .enter().append("text")
-                    .attr("class", "sea-label")
-                    .attr("transform", d => {
-                        const [x, y] = mapProjection(d.coords);
-                        return `translate(${x},${y})`;
-                    })
-                    .text(d => d.name);
-
-                // Draw European Capitals
-                svg.selectAll(".euro-city-point")
-                    .data(euroCapitals)
-                    .enter().append("circle")
-                    .attr("class", "euro-city-point")
-                    .attr("cx", d => mapProjection(d.coords)[0])
-                    .attr("cy", d => mapProjection(d.coords)[1])
-                    .attr("r", 1.5);
-
-                svg.selectAll(".euro-city-label")
-                    .data(euroCapitals)
-                    .enter().append("text")
-                    .attr("class", "euro-city-label")
-                    .attr("transform", d => {
-                        const [x, y] = mapProjection(d.coords);
-                        return `translate(${x + 4},${y + 2})`;
-                    })
-                    .text(d => d.name);
-
-                // Draw UK solid countries
-                svg.selectAll('.country-path')
-                    .data(ukFeatures)
-                    .enter().append('path')
-                    .attr('class', 'country-path')
-                    .attr('d', pathGenerator);
-
-                // Draw internal borders (Scotland, Wales, England)
-                svg.append("path")
-                    .datum(topojson.mesh(ukTopology, ukTopology.objects.subunits, (a, b) => a !== b && a.id !== "IRL" && b.id !== "IRL"))
-                    .attr("d", pathGenerator)
-                    .attr("class", "country-border");
-
-                // Country Labels
-                svg.selectAll(".subunit-label")
-                    .data(ukFeatures)
-                    .enter().append("text")
-                    .attr("class", "subunit-label")
-                    .attr("transform", d => {
-                        let [x, y] = pathGenerator.centroid(d);
-                        if (d.id === "ENG") { y += 40; x += 20; }
-                        if (d.id === "SCT") { y += 15; x -= 5; }
-                        if (d.id === "NIR") { y -= 10; x -= 25; }
-                        return `translate(${x},${y})`;
-                    })
-                    .text(d => {
-                        if(d.id === 'ENG') return 'ENGLAND';
-                        if(d.id === 'SCT') return 'SCOTLAND';
-                        if(d.id === 'WLS') return 'WALES';
-                        if(d.id === 'NIR') return 'N.IRELAND';
-                        return "";
-                    });
-
-                // Major UK Cities Points
-                svg.selectAll(".city-point")
-                    .data(ukRealCities)
-                    .enter().append("circle")
-                    .attr("class", "city-point")
-                    .attr("cx", d => mapProjection(d.coords)[0])
-                    .attr("cy", d => mapProjection(d.coords)[1])
-                    .attr("r", 3);
-
-                // Major UK Cities Labels
-                svg.selectAll(".city-label")
-                    .data(ukRealCities)
-                    .enter().append("text")
-                    .attr("class", "city-label")
-                    .attr("transform", d => {
-                        const [x, y] = mapProjection(d.coords);
-                        return `translate(${x + 6},${y + 2})`;
-                    })
-                    .text(d => d.name);
+                drawMap();
+                window.addEventListener('resize', () => requestAnimationFrame(drawMap));
 
             } catch (error) {
                 console.warn("Map topology loaded in fallback mode or failed:", error);
-                svg.append("rect").attr("width", width).attr("height", height).attr("fill", "#1e293b");
-                svg.append("text").attr("x", width/2).attr("y", height/2).attr("fill", "#64748b").attr("text-anchor", "middle").text("MAP DATA UNAVAILABLE - PLAYING OFFLINE");
+                svg.selectAll("*").remove();
+                svg.append("rect").attr("width", width).attr("height", height).attr("fill", "#001021");
+                svg.append("text").attr("x", width/2).attr("y", height/2).attr("fill", "#38bdf8").attr("text-anchor", "middle").text("MAP DATA UNAVAILABLE - PLAYING OFFLINE");
             }
         }
 
-        // --- Core UI and Game Loop Functions ---
+        function drawMap() {
+            if (!euroCountriesData || !ukFeaturesData) return;
+
+            const mapContainer = document.getElementById("map-container");
+            const svg = d3.select("#d3-map");
+            
+            const width = mapContainer.clientWidth || 800;
+            const height = mapContainer.clientHeight || 800;
+            
+            svg.attr("viewBox", `0 0 ${width} ${height}`);
+            svg.selectAll("*").remove();
+
+            // Caps the scaling factor to match the original layout max-width (896px)
+            // This prevents the UK from enlarging on fullscreen while revealing more area!
+            const scaleFactor = Math.min(width, 896) * 2.8;
+
+            mapProjection = d3.geoMercator()
+                .center([-2.0, 54.5])
+                .scale(scaleFactor)
+                .translate([width / 2, height / 2]);
+                
+            const pathGenerator = d3.geoPath().projection(mapProjection);
+
+            svg.selectAll('.europe-path')
+                .data(euroCountriesData)
+                .enter().append('path')
+                .attr('class', 'europe-path')
+                .attr('d', pathGenerator);
+
+            svg.selectAll(".sea-label")
+                .data(seaLabels)
+                .enter().append("text")
+                .attr("class", "sea-label")
+                .attr("transform", d => {
+                    const [x, y] = mapProjection(d.coords);
+                    return `translate(${x},${y})`;
+                })
+                .text(d => d.name);
+
+            svg.selectAll(".euro-city-point")
+                .data(euroCapitals)
+                .enter().append("circle")
+                .attr("class", "euro-city-point")
+                .attr("cx", d => mapProjection(d.coords)[0])
+                .attr("cy", d => mapProjection(d.coords)[1])
+                .attr("r", 1.5);
+
+            svg.selectAll(".euro-city-label")
+                .data(euroCapitals)
+                .enter().append("text")
+                .attr("class", "euro-city-label")
+                .attr("transform", d => {
+                    const [x, y] = mapProjection(d.coords);
+                    return `translate(${x + 4},${y + 2})`;
+                })
+                .text(d => d.name);
+
+            svg.selectAll('.country-path')
+                .data(ukFeaturesData)
+                .enter().append('path')
+                .attr('class', 'country-path')
+                .attr('d', pathGenerator);
+
+            svg.append("path")
+                .datum(topojson.mesh(ukTopologyData, ukTopologyData.objects.subunits, (a, b) => a !== b && a.id !== "IRL" && b.id !== "IRL"))
+                .attr("d", pathGenerator)
+                .attr("class", "country-border");
+
+            svg.selectAll(".subunit-label")
+                .data(ukFeaturesData)
+                .enter().append("text")
+                .attr("class", "subunit-label")
+                .attr("transform", d => {
+                    let [x, y] = pathGenerator.centroid(d);
+                    if (d.id === "ENG") { y += 40; x += 20; }
+                    if (d.id === "SCT") { y += 15; x -= 5; }
+                    if (d.id === "NIR") { y -= 10; x -= 25; }
+                    return `translate(${x},${y})`;
+                })
+                .text(d => {
+                    if(d.id === 'ENG') return 'ENGLAND';
+                    if(d.id === 'SCT') return 'SCOTLAND';
+                    if(d.id === 'WLS') return 'WALES';
+                    if(d.id === 'NIR') return 'N.IRELAND';
+                    return "";
+                });
+
+            svg.selectAll(".city-point")
+                .data(ukRealCities)
+                .enter().append("circle")
+                .attr("class", "city-point")
+                .attr("cx", d => mapProjection(d.coords)[0])
+                .attr("cy", d => mapProjection(d.coords)[1])
+                .attr("r", 3);
+
+            svg.selectAll(".city-label")
+                .data(ukRealCities)
+                .enter().append("text")
+                .attr("class", "city-label")
+                .attr("transform", d => {
+                    const [x, y] = mapProjection(d.coords);
+                    return `translate(${x + 6},${y + 2})`;
+                })
+                .text(d => d.name);
+            
+            // Re-render markers onto new projection
+            renderMapIcons();
+        }
 
         function updateBars() {
             sustainability = Math.max(0, Math.min(100, sustainability));
@@ -1017,6 +1167,13 @@
         }
 
         function startGame() {
+            // Request full screen on initial game start
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch((err) => {
+                    console.warn(`Error attempting to enable fullscreen: ${err.message}`);
+                });
+            }
+
             alertSound.volume = 0;
             alertSound.play().then(() => {
                 alertSound.pause();
@@ -1025,7 +1182,26 @@
             }).catch(e => console.warn("Silent unlock blocked", e));
             
             startBGM(); 
-            document.getElementById('start-screen').classList.add('hidden');
+            
+            // Fade out the solid start screen to reveal the UI beneath
+            const startScreen = document.getElementById('start-screen');
+            startScreen.classList.add('animate-fade-out');
+            
+            // Trigger slow UI emergence
+            const uis = ['left-sidebar', 'top-right-ui', 'bottom-right-ui'];
+            uis.forEach(id => {
+                const el = document.getElementById(id);
+                el.classList.remove('opacity-0');
+                el.classList.add('animate-ui-emerge');
+            });
+
+            // Trigger the top-to-bottom map wipe animation shortly after UI reveal
+            setTimeout(() => {
+                const mapContainer = document.getElementById('map-container');
+                mapContainer.classList.remove('opacity-0');
+                mapContainer.classList.add('animate-map-wipe');
+            }, 800);
+
             gameActive = true;
             currentYear = 2018;
             sustainability = 100;
@@ -1082,7 +1258,7 @@
                 .attr("width", 20)
                 .attr("height", 20)
                 .attr("fill", "#dc2626")
-                .attr("stroke", "#475569")
+                .attr("stroke", "#001b36")
                 .attr("stroke-width", 2);
 
             alerts.append("text")
@@ -1106,13 +1282,12 @@
             const optContainer = document.getElementById('modal-options');
             optContainer.innerHTML = '';
 
-            // Randomize option order so players cannot guess based on button position
             const randomizedOptions = [...prob.options].sort(() => Math.random() - 0.5);
 
             randomizedOptions.forEach((opt) => {
                 const originalIndex = prob.options.indexOf(opt);
                 const btn = document.createElement('button');
-                btn.className = 'w-full text-left p-4 bg-slate-800 hover:bg-slate-700 border-2 border-slate-600 text-[8px] md:text-[10px] text-sky-200 transition-colors flex flex-col justify-between gap-4 shadow-[4px_4px_0px_0px_#0f172a] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_#0f172a] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none';
+                btn.className = 'w-full text-left p-4 bg-[#001021] hover:bg-[#38bdf8] hover:text-[#000] border-2 border-[#38bdf8] text-[8px] md:text-[10px] text-sky-200 transition-colors flex flex-col justify-between gap-4 shadow-[0_0_8px_rgba(56,189,248,0.3)_inset] hover:shadow-[0_0_15px_rgba(56,189,248,0.8)_inset] active:scale-[0.98]';
                 
                 btn.innerHTML = `
                     <span class="leading-[1.8]">${opt.text}</span>
@@ -1187,7 +1362,28 @@
 
         function restartGame() {
             document.getElementById('game-over-screen').classList.add('hidden');
-            startGame();
+            
+            // Reset the start screen animation state for restart
+            const startScreen = document.getElementById('start-screen');
+            startScreen.classList.remove('animate-fade-out');
+            
+            // Reset the UI emergence animation state
+            const uis = ['left-sidebar', 'top-right-ui', 'bottom-right-ui'];
+            uis.forEach(id => {
+                const el = document.getElementById(id);
+                el.classList.remove('animate-ui-emerge');
+                el.classList.add('opacity-0');
+            });
+
+            // Reset the map animation state
+            const mapContainer = document.getElementById('map-container');
+            mapContainer.classList.remove('animate-map-wipe');
+            mapContainer.classList.add('opacity-0');
+            
+            // Relaunch immediately to show the entry sequence again
+            setTimeout(() => {
+                startGame();
+            }, 50);
         }
 
         loadMapData();
